@@ -14,5 +14,8 @@
     },
     "./*": "./*"
   },
-  "license": "See LICENSE.md file in the root of the repository"
+  "license": "See LICENSE.md file in the root of the repository",
+  "dependencies": {
+    "@n8n/frontend-typescript-config": "file:"
+  }
 }
