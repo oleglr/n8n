@@ -8,13 +8,15 @@ import type {
 	FindOptionsSelect,
 	FindManyOptions,
 	FindOptionsRelations,
+	EntityManager,
 } from '@n8n/typeorm';
+import { PROJECT_ROOT } from 'n8n-workflow';
 
 import type { ListQuery } from '@/requests';
 import { isStringArray } from '@/utils';
 
 import { FolderRepository } from './folder.repository';
-import type { Folder, FolderWithWorkflowsCount } from '../entities/folder';
+import type { Folder, FolderWithWorkflowAndSubFolderCount } from '../entities/folder';
 import { TagEntity } from '../entities/tag-entity';
 import { WebhookEntity } from '../entities/webhook-entity';
 import { WorkflowEntity } from '../entities/workflow-entity';
@@ -34,7 +36,7 @@ type WorkflowFolderUnionRow = {
 export type WorkflowFolderUnionFull = (
 	| ListQuery.Workflow.Plain
 	| ListQuery.Workflow.WithSharing
-	| FolderWithWorkflowsCount
+	| FolderWithWorkflowAndSubFolderCount
 ) & {
 	resource: ResourceType;
 };
@@ -77,6 +79,12 @@ export class WorkflowRepository extends Repository<WorkflowEntity> {
 			...(maxResults ? { take: maxResults, order: { createdAt: 'ASC' } } : {}),
 		});
 		return activeWorkflows.map((workflow) => workflow.id);
+	}
+
+	async getActiveCount() {
+		return await this.count({
+			where: { active: true },
+		});
 	}
 
 	async findById(workflowId: string) {
@@ -256,6 +264,23 @@ export class WorkflowRepository extends Repository<WorkflowEntity> {
 	}
 
 	async getWorkflowsAndFoldersWithCount(workflowIds: string[], options: ListQuery.Options = {}) {
+		if (
+			options.filter?.parentFolderId &&
+			typeof options.filter?.parentFolderId === 'string' &&
+			options.filter.parentFolderId !== PROJECT_ROOT &&
+			typeof options.filter?.projectId === 'string' &&
+			options.filter.name
+		) {
+			const folderIds = await this.folderRepository.getAllFolderIdsInHierarchy(
+				options.filter.parentFolderId,
+				options.filter.projectId,
+			);
+
+			options.filter.parentFolderIds = [options.filter.parentFolderId, ...folderIds];
+			options.filter.folderIds = folderIds;
+			delete options.filter.parentFolderId;
+		}
+
 		const [workflowsAndFolders, count] = await Promise.all([
 			this.getWorkflowsAndFoldersUnion(workflowIds, options),
 			this.getWorkflowsAndFoldersCount(workflowIds, options),
@@ -388,11 +413,19 @@ export class WorkflowRepository extends Repository<WorkflowEntity> {
 		qb: SelectQueryBuilder<WorkflowEntity>,
 		filter: ListQuery.Options['filter'],
 	): void {
-		if (filter?.parentFolderId === '0') {
+		if (filter?.parentFolderId === PROJECT_ROOT) {
 			qb.andWhere('workflow.parentFolderId IS NULL');
 		} else if (filter?.parentFolderId) {
 			qb.andWhere('workflow.parentFolderId = :parentFolderId', {
 				parentFolderId: filter.parentFolderId,
+			});
+		} else if (
+			filter?.parentFolderIds &&
+			Array.isArray(filter.parentFolderIds) &&
+			filter.parentFolderIds.length > 0
+		) {
+			qb.andWhere('workflow.parentFolderId IN (:...parentFolderIds)', {
+				parentFolderIds: filter.parentFolderIds,
 			});
 		}
 	}
@@ -511,7 +544,11 @@ export class WorkflowRepository extends Repository<WorkflowEntity> {
 		const isParentFolderIncluded = isDefaultSelect || select?.parentFolder;
 
 		if (isParentFolderIncluded) {
-			qb.leftJoinAndSelect('workflow.parentFolder', 'parentFolder');
+			qb.leftJoin('workflow.parentFolder', 'parentFolder').addSelect([
+				'parentFolder.id',
+				'parentFolder.name',
+				'parentFolder.parentFolderId',
+			]);
 		}
 
 		if (areTagsEnabled && areTagsRequested) {
@@ -604,5 +641,20 @@ export class WorkflowRepository extends Repository<WorkflowEntity> {
 
 	async findByActiveState(activeState: boolean) {
 		return await this.findBy({ active: activeState });
+	}
+
+	async moveAllToFolder(fromFolderId: string, toFolderId: string, tx: EntityManager) {
+		await tx.update(
+			WorkflowEntity,
+			{ parentFolder: { id: fromFolderId } },
+			{
+				parentFolder:
+					toFolderId === PROJECT_ROOT
+						? null
+						: {
+								id: toFolderId,
+							},
+			},
+		);
 	}
 }

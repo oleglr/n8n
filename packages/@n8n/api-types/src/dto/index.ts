@@ -3,6 +3,9 @@ export { AiChatRequestDto } from './ai/ai-chat-request.dto';
 export { AiApplySuggestionRequestDto } from './ai/ai-apply-suggestion-request.dto';
 export { AiFreeCreditsRequestDto } from './ai/ai-free-credits-request.dto';
 
+export { BinaryDataQueryDto } from './binary-data/binary-data-query.dto';
+export { BinaryDataSignedQueryDto } from './binary-data/binary-data-signed-query.dto';
+
 export { LoginRequestDto } from './auth/login-request.dto';
 export { ResolveSignupTokenQueryDto } from './auth/resolve-signup-token-query.dto';
 
@@ -56,3 +59,8 @@ export { UpdateApiKeyRequestDto } from './api-keys/update-api-key-request.dto';
 export { CreateApiKeyRequestDto } from './api-keys/create-api-key-request.dto';
 
 export { CreateFolderDto } from './folders/create-folder.dto';
+export { UpdateFolderDto } from './folders/update-folder.dto';
+export { DeleteFolderDto } from './folders/delete-folder.dto';
+export { ListFolderQueryDto } from './folders/list-folder-query.dto';
+
+export { ListInsightsWorkflowQueryDto } from './insights/list-workflow-query.dto';

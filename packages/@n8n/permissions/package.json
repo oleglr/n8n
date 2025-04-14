@@ -1,6 +1,6 @@
 {
   "name": "@n8n/permissions",
-  "version": "0.17.0",
+  "version": "0.21.0",
   "scripts": {
     "clean": "rimraf dist .turbo",
     "dev": "pnpm watch",
@@ -20,7 +20,7 @@
   "files": [
     "dist/**/*"
   ],
-  "dependencies": {
-    "@n8n/permissions": "file:"
+  "devDependencies": {
+    "@n8n/typescript-config": "workspace:*"
   }
 }
