@@ -1,0 +1,4 @@
+buildCommand: |
+  pnpm install
+  pnpm add -D tsup
+  pnpm run build
