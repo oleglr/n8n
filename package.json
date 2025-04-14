@@ -3,14 +3,12 @@
   "version": "1.89.0",
   "private": true,
   "engines": {
-    "node": ">=20.15",
-    "pnpm": ">=10.2.1"
+    "node": ">=20.15.0"
   },
   "packageManager": "pnpm@10.2.1",
   "scripts": {
     "prepare": "node scripts/prepare.mjs",
     "preinstall": "node scripts/block-npm-install.js",
-    "build": "turbo run build",
     "build:backend": "turbo run build:backend",
     "build:frontend": "turbo run build:frontend",
     "build:nodes": "turbo run build:nodes",
@@ -44,6 +42,7 @@
     "test:nodes": "turbo run test:nodes --concurrency=1",
     "watch": "turbo run watch --parallel",
     "webhook": "./packages/cli/bin/n8n webhook",
+    "build": "pnpm install && turbo run build",
     "worker": "./packages/cli/bin/n8n worker"
   },
   "devDependencies": {
@@ -100,13 +99,13 @@
       "pkce-challenge@5.0.0": "patches/pkce-challenge@5.0.0.patch",
       "pyodide@0.23.4": "patches/pyodide@0.23.4.patch",
       "@types/express-serve-static-core@5.0.6": "patches/@types__express-serve-static-core@5.0.6.patch",
-      "@types/ws@8.5.4": "patches/@types__ws@8.5.4.patch",
       "@types/uuencode@0.0.3": "patches/@types__uuencode@0.0.3.patch",
       "vue-tsc@2.2.8": "patches/vue-tsc@2.2.8.patch",
       "eslint-plugin-n8n-local-rules": "patches/eslint-plugin-n8n-local-rules.patch"
     }
   },
   "dependencies": {
+    "mongodb": "5.8.0",
     "sqlite3": "^5.1.7"
   }
 }
